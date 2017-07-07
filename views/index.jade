@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1= title
+  p(id="welc") Welcome to2 #{title}
+  script(src="/socket.io/socket.io.js")
+  script.
+   var socket = io.connect('http://localhost:2999');
+   socket.on('news', function(data) {
+    console.log(JSON.stringfly(data);
+    document.getElementById('welc').innerHTML = 'Welcome to3';
+    socket.emit('my other event', {my: 'data'});
+   });
