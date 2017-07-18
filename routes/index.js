@@ -13,7 +13,7 @@ var coords_strada =  {"coordinates":[-47.985,-21.132]};
 /* GET the map page */
 router.get('/map', function(req, res) {
   res.render('map', {
-    title: "Express API",
+    title: "Mapa Ribeirania",
   });
 }); //end of map render
 

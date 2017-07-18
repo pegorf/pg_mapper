@@ -8,10 +8,15 @@ var bodyParser = require('body-parser');
 var app = express();
 
 //Trying socket connection for communication with view	
-var server = require('http').Server(app).listen(2999, function(){
+//var server = require('http').Server(app).listen(2999, function(){
+//  console.log('listening on port 2999');
+//});
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
+server.listen(2999, function() {
   console.log('listening on port 2999');
 });
-var io = require('socket.io')(server);
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -69,10 +74,10 @@ app.use(function(err, req, res, next) {
 // 		//coords_strada[0] = lng;
 // 		coords_strada[0] = coords_strada[0] + 0.001;
 // 		io.emit('news', { coords_strada: coords_strada });
-
+//
 // 		console.log(' coords_strada @5s: ' + coords_strada);
 // 	}
-
+//
 // }, 1000);
 
 
@@ -267,6 +272,17 @@ io.on('connection', function (socket) {
 	});
    //getPosition(my_dev_strada);
 });
+
+io.on('disconnect', function(socket) {
+	console.log('io on disconnect...');
+
+});
+
+io.on('error', function(socket) {
+	console.log('io on error...');
+
+});
+
 
 // io.on('position_request', function (socket) {
 // 	console.log('position_request event !!!!');

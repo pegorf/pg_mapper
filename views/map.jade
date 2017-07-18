@@ -4,8 +4,10 @@ block content
     #map
     script(src="/socket.io/socket.io.js")
     script.
-
-        var socket = io.connect('http://localhost:2999');
+        console.log('map loaded');
+        //var socket = io.connect('http://localhost:2999');
+        var socket = io.connect("http://34.211.102.240:2999");
+        //var socket = io.connect("http://127.0.0.1:2999");
         socket.on('news', function(data) {
             console.log('data in: ' + JSON.stringify(data));
             //socket.emit('my other event', {my: 'data'});
@@ -13,7 +15,26 @@ block content
             updateMarker(data);    
         });
 
+        console.log('socket: ', socket);
+
         socket.emit('position_request', "true");
+
+        socket.on('disconnect', function(data) {
+            console.log('disconnect: ' + data);
+        });
+        socket.on('error', function(data) {
+            console.log('error: ' + data);
+        });
+        socket.on('connect_error', function(data) {
+            console.log('connect_error: ' + data);
+        });
+        socket.on('connect_timeout', function(data) {
+            console.log('connect_timeout: ' + data);
+        });
+        socket.on('reconnect', function(data) {
+            console.log('reconnect: ' + data);
+        });
+
 
         // Create variable to hold map element, give initial settings to map
         var map = L.map('map',{ center: [-21.18, -47.80], zoom: 15, closePopupOnClick: false});
