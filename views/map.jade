@@ -6,14 +6,16 @@ block content
     script.
         console.log('map loaded');
         //var socket = io.connect('http://localhost:2999');
-        var socket = io.connect("http://34.211.102.240:2999");
-        //var socket = io.connect("http://127.0.0.1:2999");
+        var socket = io.connect('http://http://ec2-34-208-154-90.us-west-2.compute.amazonaws.com:2999');
         socket.on('news', function(data) {
             console.log('data in: ' + JSON.stringify(data));
             //socket.emit('my other event', {my: 'data'});
             //socket.emit('position_request', "true");
             updateMarker(data);    
         });
+        
+        //L.Icon.Default.imagePath = 'http://localhost:2999/img';
+        console.log(L.Icon.Default.imagePath);
 
         console.log('socket: ', socket);
 
@@ -48,65 +50,134 @@ block content
 
         var marker1 = "undefined";
         var marker2 = "undefined";
+        var circle1;
+        var circle2;
+        var marker_spd1;
+        var marker_spd2;
+
+        var line_fiorino = [];
+        var line_strada = [];
 
         function updateMarker(_coords) {
             if(typeof _coords != "undefined") {
                 var obj = JSON.parse(JSON.stringify(_coords));
 
                 //STRADA UPDATE
+                var carBlueIcon = new L.Icon({
+                  //iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                  iconUrl: '/img/automobile_blue.png',
+                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                  iconSize: [35, 51],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                });
                 if(obj.hasOwnProperty("coords_strada") && (Number(JSON.stringify(obj.coords_strada)) != 0)) {
                     console.log('obj.coords_strada: ' + JSON.stringify(obj.coords_strada));
 
-                    var coords = [Number(JSON.stringify(obj.coords_strada[1])), Number(JSON.stringify(obj.coords_strada[0]))]; 
+                    if ( typeof(obj.coords_strada) == "object") {
+                       var spd_marker_value1 = Math.round(Number(obj.coords_strada.value));
+                       var time_converted = new Date(obj.coords_strada.time).toLocaleString("pt-BR");    //convert to locale
+                       line_strada.push([Number(JSON.stringify(obj.coords_strada.location.coordinates[1])), Number(JSON.stringify(obj.coords_strada.location.coordinates[0]))]);
+                      
+                       circle1 = L.circleMarker(L.latLng([Number(JSON.stringify(obj.coords_strada.location.coordinates[1])), Number(JSON.stringify(obj.coords_strada.location.coordinates[0]))]), {'radius' : 5, 'color' : '#1E90FF'}).bindPopup("<b>Strada<br></b>" + time_converted + "<br>" + spd_marker_value1 + " Km/h");
+                        
+                       circle1.addTo(map);
 
-                    if(marker1 != "undefined") {
-                        circle1 = L.circleMarker(marker1.getLatLng(), {'radius' : 5});
-                        circle1.addTo(map);
-                        marker1.setLatLng(coords);
-                    }
-                    else {
-                        marker1 = L.marker(coords, {autoclose: true});
+                      if(marker1 != "undefined") {
+                        marker1.setLatLng([Number(JSON.stringify(obj.coords_strada.location.coordinates[1])), Number(JSON.stringify(obj.coords_strada.location.coordinates[0]))]);
+                        marker1.bindPopup("<b>Strada<br></b>" + time_converted).openPopup();
+                      }
+                      else {
+                        marker1 = L.marker([Number(JSON.stringify(obj.coords_strada.location.coordinates[1])), Number(JSON.stringify(obj.coords_strada.location.coordinates[0]))], {autoclose: true, icon: carBlueIcon});
                         marker1.addTo(map);
-                        marker1.bindPopup("<b>Strada</b>").openPopup();
+
+                        marker1.bindPopup("<b>Strada<br></b>" + time_converted).openPopup();
+                      }
+
+                      //Build Markers for High Speed - if above 100km/h
+                      //var spd_marker_value1 = Math.round(Number(obj.coords_strada.value));
+
+                      if(spd_marker_value1 > 110) {
+                        marker_spd = L.marker([Number(JSON.stringify(obj.coords_strada.location.coordinates[1])), Number(JSON.stringify(obj.coords_strada.location.coordinates[0]))]);
+                        marker_spd.addTo(map).bindPopup("<b>Strada<br></b>" + time_converted + "<br>" + spd_marker_value1 + " Km/h", {'autoClose': false}).openPopup();
+                      }
                     }
+                    else
+                    {
+                        console.log('is not an object => ' + typeof(obj.coords_strada));
+
+                    }
+
+                    //var polyline = L.polyline(line_strada, {'weight': 0.5, 'lineCap': 'round', 'dashArray': "5, 10"}).addTo(map);
                 }
 
                 //FIORINO UPDATE
                 var greenIcon = new L.Icon({
                   iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                  //iconUrl: '../public/images/automobile_blue.png',
                   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                   iconSize: [25, 41],
                   iconAnchor: [12, 41],
                   popupAnchor: [1, -34],
                   shadowSize: [41, 41]
                 });
+                // Creates a red marker with the coffee icon
+                var redMarker = L.AwesomeMarkers.icon({
+                  icon: 'home',
+                  markerColor: 'orange'
+                });
+                //
+                var carGreenIcon = new L.Icon({
+                  //iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                  iconUrl: '/img/automobile_green.png',
+                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                  iconSize: [35, 51],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                });
                 if(obj.hasOwnProperty("coords_fiorino") && (Number(JSON.stringify(obj.coords_fiorino)) != 0)) {
-                    console.log('obj.coords_fiorino: ' + JSON.stringify(obj.coords_fiorino));
+                    console.log('obj.coords_fiorino--: ' + JSON.stringify(obj.coords_fiorino));
 
-                    var coords = [Number(JSON.stringify(obj.coords_fiorino[1])), Number(JSON.stringify(obj.coords_fiorino[0]))]; 
+                    //var coords = [Number(JSON.stringify(obj.coords_fiorino[1])), Number(JSON.stringify(obj.coords_fiorino[0]))]; 
 
-                    if(marker2 != "undefined") {
-                        circle1 = L.circleMarker(marker2.getLatLng(), {'radius' : 5, 'color' : '#0B610B' });
-                        circle1.addTo(map);
-                        marker2.setLatLng(coords);
-                    }
-                    else {
-                        marker2 = L.marker(coords, {autoclose: true, icon: greenIcon});
+                    if ( typeof(obj.coords_fiorino) == "object") {
+                       var time_converted = new Date(obj.coords_fiorino.time).toLocaleString("pt-BR");    //convert to locale
+                       line_fiorino.push([Number(JSON.stringify(obj.coords_fiorino.location.coordinates[1])), Number(JSON.stringify(obj.coords_fiorino.location.coordinates[0]))]);
+                      
+                       var spd_marker_value2 = Math.round(Number(obj.coords_fiorino.value));
+
+                       circle2 = L.circleMarker(L.latLng([Number(JSON.stringify(obj.coords_fiorino.location.coordinates[1])), Number(JSON.stringify(obj.coords_fiorino.location.coordinates[0]))]), {'radius' : 5, 'color' : '#0B610B'}).bindPopup("<b>Fiorino<br></b>" + time_converted + "<br>" + spd_marker_value2 + " Km/h");
+                        
+                       circle2.addTo(map);
+
+                      if(marker2 != "undefined") {
+                        marker2.setLatLng([Number(JSON.stringify(obj.coords_fiorino.location.coordinates[1])), Number(JSON.stringify(obj.coords_fiorino.location.coordinates[0]))]);
+                        marker2.bindPopup("<b>Fiorino<br></b>" + time_converted).openPopup();
+                      }
+                      else {
+                        marker2 = L.marker([Number(JSON.stringify(obj.coords_fiorino.location.coordinates[1])), Number(JSON.stringify(obj.coords_fiorino.location.coordinates[0]))], {autoclose: true, icon: carGreenIcon});
                         marker2.addTo(map);
-                        marker2.bindPopup("<b>Fiorino</b>").openPopup();
+
+                        marker2.bindPopup("<b>Fiorino<br></b>" + time_converted).openPopup();
+                      }
+
+                      //Build Markers for High Speed - if above 50km/h
+                      //var spd_marker_value2 = Math.round(Number(obj.coords_fiorino.value));
+
+                      if(spd_marker_value2 > 110) {
+                        marker_spd = L.marker([Number(JSON.stringify(obj.coords_fiorino.location.coordinates[1])), Number(JSON.stringify(obj.coords_fiorino.location.coordinates[0]))], {icon: greenIcon});
+                        marker_spd.addTo(map).bindPopup("<b>Fiorino<br></b>" + time_converted + "<br>" + spd_marker_value2 + " Km/h", {'autoClose': false}).openPopup();
+                      }
                     }
+                    else
+                    {
+                        console.log('is not an object => ' + typeof(obj.coords_fiorino));
+
+                    }
+
+                    //var polyline = L.polyline(line_fiorino, {'color': '#0B610B', 'weight': 0.5, 'lineCap': 'round', 'dashArray': "5, 10"}).addTo(map);
                 }
             }
-
-
-            if (marker1 == 'undefined') {
-                socket.emit('position_request', "true");
-            }
         }
-
-        // Add JSON to map
-//        L.geoJson(myData,{
-//            onEachFeature: function (feature, layer) {
-//                layer.bindPopup(feature.properties.f2);
-//            }
-//        }).addTo(map);
